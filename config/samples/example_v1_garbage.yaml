@@ -1,0 +1,15 @@
+apiVersion: example.bebc.com/v1
+kind: Garbage
+metadata:
+  labels:
+    app.kubernetes.io/name: garbage
+    app.kubernetes.io/instance: garbage-sample
+    app.kubernetes.io/part-of: garbage-collection-example
+    app.kuberentes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: garbage-collection-example
+  name: garbage-sample
+spec:
+  nginx:
+    replica: 1
+    image: nginx
+  setOwn: true

@@ -1,0 +1,44 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: garbage-example-clusterrole
+rules:
+  - apiGroups:
+      - example.bebc.com
+    resources:
+      - garbages
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - example.bebc.com
+    resources:
+      - garbages/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - example.bebc.com
+    resources:
+      - garbages/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - "apps"
+    resources:
+      - deployments
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete

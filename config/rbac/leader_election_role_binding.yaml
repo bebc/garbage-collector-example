@@ -1,0 +1,19 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/name: rolebinding
+    app.kubernetes.io/instance: leader-election-rolebinding
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: garbage-collection-example
+    app.kubernetes.io/part-of: garbage-collection-example
+    app.kubernetes.io/managed-by: kustomize
+  name: garbage-example-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: garbage-example-role
+subjects:
+- kind: ServiceAccount
+  name: garbage-example
+  namespace: example

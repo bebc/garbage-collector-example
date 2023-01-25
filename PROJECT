@@ -1,0 +1,16 @@
+domain: bebc.com
+layout:
+- go.kubebuilder.io/v3
+projectName: garbage-collection-example
+repo: bebc.com/garbage-collection
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: bebc.com
+  group: example
+  kind: Garbage
+  path: bebc.com/garbage-collection/api/v1
+  version: v1
+version: "3"

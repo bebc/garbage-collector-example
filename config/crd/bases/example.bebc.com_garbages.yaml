@@ -1,0 +1,108 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.9.2
+  creationTimestamp: null
+  name: garbages.example.bebc.com
+spec:
+  group: example.bebc.com
+  names:
+    kind: Garbage
+    listKind: GarbageList
+    plural: garbages
+    singular: garbage
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: Garbage is the Schema for the garbages API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: GarbageSpec defines the desired state of Garbage
+            properties:
+              nginx:
+                properties:
+                  image:
+                    type: string
+                  replica:
+                    format: int32
+                    type: integer
+                type: object
+              setFinalizer:
+                properties:
+                  name:
+                    type: string
+                  set:
+                    type: boolean
+                type: object
+              setOwn:
+                type: boolean
+            type: object
+          status:
+            description: GarbageStatus defines the observed state of Garbage
+            properties:
+              availableReplicas:
+                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
+                  of cluster Important: Run "make" to regenerate code after modifying
+                  this file'
+                format: int32
+                type: integer
+              conditions:
+                items:
+                  properties:
+                    lastTransitionTime:
+                      description: lastTransitionTime is the time of the last update
+                        to the current status property.
+                      format: date-time
+                      type: string
+                    message:
+                      description: Human-readable message indicating details for the
+                        condition's last transition.
+                      type: string
+                    observedGeneration:
+                      description: ObservedGeneration represents the .metadata.generation
+                        that the condition was set based upon. For instance, if `.metadata.generation`
+                        is currently 12, but the `.status.conditions[].observedGeneration`
+                        is 9, the condition is out of date with respect to the current
+                        state of the instance.
+                      format: int64
+                      type: integer
+                    reason:
+                      description: Reason for the condition's last transition.
+                      type: string
+                    status:
+                      description: Status of the condition.
+                      type: string
+                    type:
+                      description: Type of the condition being reported.
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - status
+                  - type
+                  type: object
+                type: array
+            required:
+            - availableReplicas
+            - conditions
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
