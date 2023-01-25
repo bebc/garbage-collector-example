@@ -160,7 +160,8 @@ func (r *GarbageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 func (r *GarbageReconciler) createOrUpdateNginx(ctx context.Context, obj *examplev1.Garbage) (string, error) {
 	oldDeploy := &appsv1.Deployment{}
 	newDeploy := r.getDeployNginx(obj)
-	if err := r.Get(ctx, types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name + "-example"}, oldDeploy); err != nil {
+	if err := r.Get(ctx, types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name + "-example"}, oldDeploy);
+		err != nil {
 		if apierrors.IsNotFound(err) {
 			if obj.Spec.SetOwn {
 				r.addOwnReference(obj, newDeploy)
