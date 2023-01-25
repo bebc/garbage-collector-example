@@ -94,7 +94,7 @@ func (r *GarbageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			return ctrl.Result{}, nil
 		}
 		logger.Info("get garbage", "error", err)
-		return ctrl.Result{}, fmt.Errorf("get garbage %v err %v", req.Name,err)
+		return ctrl.Result{}, fmt.Errorf("get garbage %v err %w", req.Name, err)
 	}
 
 	if garbage.DeletionTimestamp != nil {
@@ -102,7 +102,7 @@ func (r *GarbageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			//过10s删除
 			err := r.deleteExternalResources(garbage)
 			if err != nil {
-				return ctrl.Result{}, fmt.Errorf("delete external resourceerr %v", err)
+				return ctrl.Result{}, fmt.Errorf("delete external resourceerr %w", err)
 			}
 			r.removeFinalizer(garbage)
 			//meta := metav1.ObjectMeta{
@@ -117,7 +117,7 @@ func (r *GarbageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			//logger.Info("patch", "value", string(b))
 			err = r.Update(ctx, garbage)
 			if err != nil {
-				return ctrl.Result{}, fmt.Errorf("remove finalizer and update garbage err %v", err)
+				return ctrl.Result{}, fmt.Errorf("remove finalizer and update garbage err %w", err)
 			}
 
 		}
@@ -140,18 +140,18 @@ func (r *GarbageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	err := r.Update(ctx, obj)
 	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("update garbage finalizer err %v", err)
+		return ctrl.Result{}, fmt.Errorf("update garbage finalizer err %w", err)
 	}
 
 	eventType, err := r.createOrUpdateNginx(ctx, obj)
 	if err != nil {
-		return ctrl.Result{},fmt.Errorf("create or update garbage err %v", err)
+		return ctrl.Result{}, fmt.Errorf("create or update garbage err %w", err)
 	}
-	r.Recorder.Eventf(garbage, corev1.EventTypeNormal, "Successfully %v", eventType)
+	r.Recorder.Eventf(garbage, corev1.EventTypeNormal, eventType, "Successfully %v", eventType)
 
 	err = r.updateStatus(ctx, obj)
 	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("update garbage status err %v", err)
+		return ctrl.Result{}, fmt.Errorf("update garbage status err %w", err)
 	}
 
 	return ctrl.Result{}, nil
@@ -160,7 +160,8 @@ func (r *GarbageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 func (r *GarbageReconciler) createOrUpdateNginx(ctx context.Context, obj *examplev1.Garbage) (string, error) {
 	oldDeploy := &appsv1.Deployment{}
 	newDeploy := r.getDeployNginx(obj)
-	if err := r.Get(ctx, types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name + "-example"}, oldDeploy); err != nil {
+	if err := r.Get(ctx, types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name + "-example"}, oldDeploy);
+		err != nil {
 		if apierrors.IsNotFound(err) {
 			if obj.Spec.SetOwn {
 				r.addOwnReference(obj, newDeploy)
@@ -304,8 +305,8 @@ func (r *GarbageReconciler) getDeployNginx(obj *examplev1.Garbage) *appsv1.Deplo
 func (r *GarbageReconciler) addOwnReference(obj *examplev1.Garbage, deploy *appsv1.Deployment) {
 	owner := metav1.NewControllerRef(obj, examplev1.GroupVersion.WithKind(examplev1.ResourceKindGarbage))
 	if deploy.OwnerReferences != nil {
-		for _, ownerReverence := range deploy.OwnerReferences {
-			if ownerReverence.Name == obj.Name {
+		for i := range deploy.OwnerReferences {
+			if deploy.OwnerReferences[i].Name == obj.Name {
 				return
 			}
 		}
@@ -343,8 +344,9 @@ func (r *GarbageReconciler) removeFinalizer(obj *examplev1.Garbage) {
 func (r *GarbageReconciler) removeOwnReference(obj *examplev1.Garbage, deploy *appsv1.Deployment) {
 	//owner := metav1.NewControllerRef(obj, examplev1.GroupVersion.WithKind(examplev1.ResourceKindGarbage))
 	if deploy.OwnerReferences != nil {
-		for i, ownerReverence := range deploy.OwnerReferences {
-			ownerReverence.Name = obj.Name
+		for i := range deploy.OwnerReferences {
+			deploy.OwnerReferences[i].Name = obj.Name
+			//ownerReverence.Name = obj.Name
 			deploy.OwnerReferences = append(deploy.OwnerReferences[:i], deploy.OwnerReferences[i+1:]...)
 		}
 	}
