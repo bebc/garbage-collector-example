@@ -28,6 +28,6 @@
 FROM alpine:latest
 
 COPY bin/manager /
-#USER 65532:65532
+USER 65532:65532
 
 ENTRYPOINT ["/manager"]

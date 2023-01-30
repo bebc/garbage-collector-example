@@ -97,14 +97,16 @@ func (r *GarbageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, fmt.Errorf("get garbage %v err %w", req.Name, err)
 	}
 
-	if garbage.DeletionTimestamp != nil {
-		if r.hasFinalizer(garbage) {
+	obj := garbage.DeepCopy()
+
+	if obj.DeletionTimestamp != nil {
+		if r.hasFinalizer(obj) {
 			//过10s删除
-			err := r.deleteExternalResources(garbage)
+			err := r.deleteExternalResources(obj)
 			if err != nil {
 				return ctrl.Result{}, fmt.Errorf("delete external resourceerr %w", err)
 			}
-			r.removeFinalizer(garbage)
+			r.removeFinalizer(obj)
 			//meta := metav1.ObjectMeta{
 			//	Finalizers: garbage.Finalizers,
 			//}
@@ -115,7 +117,7 @@ func (r *GarbageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			//patch = []byte(`{"metadata":{"finalizers":{"version": "v2"}}}` + patch + "}`")
 
 			//logger.Info("patch", "value", string(b))
-			err = r.Update(ctx, garbage)
+			err = r.Update(ctx, obj)
 			if err != nil {
 				return ctrl.Result{}, fmt.Errorf("remove finalizer and update garbage err %w", err)
 			}
@@ -125,11 +127,9 @@ func (r *GarbageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, nil
 	}
 
-	if garbage.Spec.Nginx == nil {
+	if obj.Spec.Nginx == nil {
 		return ctrl.Result{}, fmt.Errorf("garbage.spec.nginx is nil")
 	}
-
-	obj := garbage.DeepCopy()
 
 	//添加finalizer
 	if obj.Spec.SetFinalizer.Set {
@@ -158,10 +158,9 @@ func (r *GarbageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 }
 
 func (r *GarbageReconciler) createOrUpdateNginx(ctx context.Context, obj *examplev1.Garbage) (string, error) {
-	oldDeploy := &appsv1.Deployment{}
+	old := &appsv1.Deployment{}
 	newDeploy := r.getDeployNginx(obj)
-	if err := r.Get(ctx, types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name + "-example"}, oldDeploy);
-		err != nil {
+	if err := r.Get(ctx, types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name + "-example"}, old); err != nil {
 		if apierrors.IsNotFound(err) {
 			if obj.Spec.SetOwn {
 				r.addOwnReference(obj, newDeploy)
@@ -178,6 +177,8 @@ func (r *GarbageReconciler) createOrUpdateNginx(ctx context.Context, obj *exampl
 		}
 		return eventCreate, err
 	}
+
+	oldDeploy := old.DeepCopy()
 
 	if !reflect.DeepEqual(oldDeploy.Spec, newDeploy.Spec) {
 		oldDeploy.Spec = newDeploy.Spec
@@ -204,8 +205,7 @@ func (r *GarbageReconciler) createOrUpdateNginx(ctx context.Context, obj *exampl
 
 func (r *GarbageReconciler) updateStatus(ctx context.Context, obj *examplev1.Garbage) error {
 	var deployment appsv1.Deployment
-	if err := r.Get(ctx, types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name + "-example"}, &deployment);
-		err != nil {
+	if err := r.Get(ctx, types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name + "-example"}, &deployment); err != nil {
 		return client.IgnoreNotFound(err)
 	}
 
@@ -325,6 +325,8 @@ func (r *GarbageReconciler) addFinalizer(obj *examplev1.Garbage) {
 				return
 			}
 		}
+		obj.Finalizers = []string{*obj.Spec.SetFinalizer.Name}
+		return
 	}
 
 	finalizerName := obj.Spec.SetFinalizer.Name
